@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       await resend.emails.send({
         from: 'DEMONCORE MC <noreply@demoncoremc.fun>',
         to: process.env.CONTACT_TO_EMAIL ?? 'you@demoncoremc.fun',
-        replyTo: email,
+        reply_to: email,
         subject: `[Contact] ${subject || 'New message'} — from ${name}`,
         text: message,
       });
