@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: 'Unbounded', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+html {
+  background: #0B0A0C;
+  color-scheme: dark;
+}
+
+body {
+  background: #0B0A0C;
+  color: #EDEAE2;
+  overflow-x: hidden;
+}
+
+/* Signature element: the fractured-core divider.
+   A hairline crack across obsidian with an ember glow that
+   travels through it — used between every major section instead
+   of decorative icons or numbered markers. */
+.crack-divider {
+  position: relative;
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, #3a3438 20%, #3a3438 80%, transparent);
+  overflow: hidden;
+}
+.crack-divider::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, #FF5A2E 45%, #FFA46B 50%, #FF5A2E 55%, transparent);
+  background-size: 60% 100%;
+  animation: crackTravel 6s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px #FF5A2E);
+}
+
+/* Enchantment glint — the shimmering diagonal sweep on enchanted items */
+.enchant-glint {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+.enchant-glint::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: linear-gradient(115deg, transparent 40%, rgba(216, 150, 255, 0.5) 47%, rgba(255, 255, 255, 0.85) 50%, rgba(216, 150, 255, 0.5) 53%, transparent 60%);
+  animation: enchantGlint 2.8s linear infinite;
+}
+@keyframes enchantGlint {
+  0% { transform: translate(-30%, -30%); }
+  100% { transform: translate(30%, 30%); }
+}
+
+/* Skeleton loader base */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #18161A;
+  border-radius: 6px;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 90, 46, 0.08), transparent);
+  animation: shimmer 1.6s infinite;
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* Custom scrollbar keeps the obsidian/ember identity even in the chrome */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #0B0A0C; }
+::-webkit-scrollbar-thumb { background: #B8431F; border-radius: 8px; }
+
+/* Visible keyboard focus everywhere — never suppressed */
+:focus-visible {
+  outline: 2px solid #FF5A2E;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
