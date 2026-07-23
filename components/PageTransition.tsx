@@ -1,27 +1,25 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 
-const variants = {
-  initial: { opacity: 0, y: 24 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } },
-  exit: { opacity: 0, y: -16, transition: { duration: 0.35, ease: [0.7, 0, 0.84, 0] } },
-};
-
+// AnimatePresence (exit + enter choreography) proved unreliable across
+// consecutive navigations — the exit/enter handoff intermittently got stuck,
+// either leaving old pages un-unmounted (DOM accumulation) or leaving new
+// pages animated-in at permanent opacity:0 (blank screen, content present in
+// DOM but invisible). Next.js already unmounts the old page synchronously on
+// navigation, so no exit animation is needed — a plain keyed fade-in has no
+// wait-for-exit state to get stuck in.
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={pathname}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        variants={variants}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div
+      key={pathname}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
+    >
+      {children}
+    </motion.div>
   );
 }

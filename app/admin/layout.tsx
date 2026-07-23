@@ -8,10 +8,10 @@ const NAV = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/ranks', label: 'Ranks' },
   { href: '/admin/crate-keys', label: 'Crate Keys' },
+  { href: '/admin/purchases', label: 'Purchase Requests' },
   { href: '/admin/staff', label: 'Staff' },
   { href: '/admin/rules', label: 'Rules' },
   { href: '/admin/links', label: 'Server & Social Links' },
-  { href: '/admin/season-winners', label: 'Season Winners' },
   { href: '/admin/event', label: 'Current Event' },
   { href: '/admin/submissions', label: 'Contact Submissions' },
   { href: '/admin/applications', label: 'Staff Applications' },
@@ -37,7 +37,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link
               key={item.href}
               href={item.href}
-              className="block px-3 py-2 text-sm text-ash hover:text-parchment hover:bg-white/5 transition-colors"
+              className="cursor-target block px-3 py-2 text-sm text-ash hover:text-parchment hover:bg-white/5 transition-colors"
             >
               {item.label}
             </Link>

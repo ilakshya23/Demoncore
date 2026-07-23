@@ -10,10 +10,10 @@ const ALLOWED_TABLES = new Set([
   'staff_members',
   'rules',
   'site_links',
-  'season_winners',
   'current_event',
   'contact_submissions',
   'staff_applications',
+  'purchase_requests',
 ]);
 
 async function requireAdmin() {

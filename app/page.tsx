@@ -3,13 +3,16 @@ import { LiveStats } from '@/components/home/LiveStats';
 import { ParallaxBackground } from '@/components/home/ParallaxBackground';
 import { WhyJoin, Season2Features, ServerInfo, About, JoinCTA } from '@/components/home/Sections';
 import ScrollVelocity from '@/components/ScrollVelocity';
+import { getDiscordUrl, getSiteLinks } from '@/lib/queries';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [discordUrl, addresses] = await Promise.all([getDiscordUrl(), getSiteLinks('server')]);
+
   return (
     <div className="relative">
       <ParallaxBackground />
       <div className="relative z-10">
-        <Hero />
+        <Hero discordUrl={discordUrl} />
         <div className="mb-12 border-y border-white/10 py-8 overflow-hidden bg-obsidian/40">
           <ScrollVelocity
             texts={[
@@ -25,12 +28,12 @@ export default function HomePage() {
             className="font-display uppercase font-black text-3xl md:text-5xl mx-6 my-1.5"
           />
         </div>
-        <ServerInfo />
+        <ServerInfo discordUrl={discordUrl} addresses={addresses} />
         <LiveStats />
         <WhyJoin />
         <Season2Features />
         <About />
-        <JoinCTA />
+        <JoinCTA discordUrl={discordUrl} />
       </div>
     </div>
   );

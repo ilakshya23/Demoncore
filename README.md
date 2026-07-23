@@ -18,7 +18,7 @@ your brief. Every gamemode page shows a live players-online badge for that serve
 
 **Admin panel** (`/admin`) — Supabase-Auth-gated (middleware + a Server Component
 check), with editable screens for: Ranks, Crate Keys, Staff, Rules, Server & Social
-Links, Season Winners, Current Event, plus read-only viewers with status actions for
+Links, Current Event, plus read-only viewers with status actions for
 Contact Submissions and Staff Applications. All writes go through one generic,
 whitelisted API route (`/api/admin/[table]`) reused by every screen, with optimistic
 UI (edits save in the background; adding/deleting a row updates instantly and rolls

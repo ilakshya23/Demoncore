@@ -40,13 +40,13 @@ export default function AdminSubmissionsPage() {
       ) : (
         <div className="space-y-4">
           {rows.map((r) => (
-            <div key={r.id} className="border border-white/10 p-5">
+            <div key={r.id} className="border border-white/10 hover:border-core-ember/60 focus-within:border-core-ember p-5 transition-colors">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-parchment font-display">{r.name}</span>
                   <span className="text-ash text-sm ml-2">{r.email}</span>
                 </div>
-                <button onClick={() => remove(r.id)} className="text-xs uppercase tracking-wide text-ash hover:text-core-ember">
+                <button onClick={() => remove(r.id)} className="cursor-target text-xs uppercase tracking-wide text-ash hover:text-core-ember">
                   Delete
                 </button>
               </div>

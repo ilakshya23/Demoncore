@@ -21,7 +21,12 @@ export default function AdminEventPage() {
   useEffect(() => {
     fetch('/api/admin/current_event')
       .then((r) => r.json())
-      .then((rows) => setEvent(Array.isArray(rows) ? rows[0] : rows));
+      .then((rows) => {
+        const row = Array.isArray(rows) ? rows[0] : rows;
+        // Older rows (or a DB missing the rules/rewards columns) can come back
+        // without these keys at all — normalize once here at the data boundary.
+        setEvent(row ? { ...row, rules: row.rules ?? [], rewards: row.rewards ?? [] } : row);
+      });
   }, []);
 
   function set<K extends keyof EventRow>(key: K, value: EventRow[K]) {
@@ -60,7 +65,7 @@ export default function AdminEventPage() {
         <h1 className="font-display text-2xl text-parchment">Current Event</h1>
         <button
           onClick={save}
-          className="border border-core-ember px-4 py-2 text-xs uppercase tracking-wide text-core-ember hover:bg-core-ember hover:text-void transition-colors"
+          className="cursor-target border border-core-ember px-4 py-2 text-xs uppercase tracking-wide text-core-ember hover:bg-core-ember hover:text-void transition-colors"
         >
           {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved ✓' : 'Save Changes'}
         </button>
@@ -71,13 +76,13 @@ export default function AdminEventPage() {
         </p>
       )}
 
-      <div className="space-y-5 border border-white/10 p-6">
+      <div className="space-y-5 border border-white/10 focus-within:border-core-ember p-6 transition-colors">
         <div>
           <label className="text-xs uppercase tracking-wide text-ash">Event Title</label>
           <input
             value={event.title}
             onChange={(e) => set('title', e.target.value)}
-            className="mt-1.5 w-full bg-obsidian border border-white/15 px-3 py-2 text-sm text-parchment focus:border-core-ember outline-none"
+            className="cursor-target mt-1.5 w-full bg-obsidian border border-white/15 px-3 py-2 text-sm text-parchment focus:border-core-ember outline-none"
           />
         </div>
         <div>
@@ -96,7 +101,7 @@ export default function AdminEventPage() {
               value={event.rules.join('\n')}
               onChange={(e) => set('rules', e.target.value.split('\n').map((s) => s.trim()).filter(Boolean))}
               rows={5}
-              className="mt-1.5 w-full bg-obsidian border border-white/15 px-3 py-2 text-sm text-parchment focus:border-core-ember outline-none resize-none"
+              className="cursor-target mt-1.5 w-full bg-obsidian border border-white/15 px-3 py-2 text-sm text-parchment focus:border-core-ember outline-none resize-none"
             />
           </div>
           <div>
@@ -105,7 +110,7 @@ export default function AdminEventPage() {
               value={event.rewards.join('\n')}
               onChange={(e) => set('rewards', e.target.value.split('\n').map((s) => s.trim()).filter(Boolean))}
               rows={5}
-              className="mt-1.5 w-full bg-obsidian border border-white/15 px-3 py-2 text-sm text-parchment focus:border-core-ember outline-none resize-none"
+              className="cursor-target mt-1.5 w-full bg-obsidian border border-white/15 px-3 py-2 text-sm text-parchment focus:border-core-ember outline-none resize-none"
             />
           </div>
         </div>

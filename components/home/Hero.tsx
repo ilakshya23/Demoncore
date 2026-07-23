@@ -17,7 +17,7 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
 };
 
-export function Hero() {
+export function Hero({ discordUrl }: { discordUrl: string }) {
   const rootRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: rootRef, offset: ['start start', 'end start'] });
   const contentOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.25]);
@@ -59,7 +59,7 @@ export function Hero() {
           >
             <Typewriter
               lines={[{ text: 'Rise of the' }, { text: 'Demons', className: 'text-core-ember' }]}
-              speed={45}
+              speed={90}
             />
           </motion.h1>
           <motion.p variants={item} className="mt-6 max-w-lg text-ash text-lg">
@@ -69,7 +69,7 @@ export function Hero() {
 
           <motion.div variants={item} className="mt-10 flex flex-wrap items-center gap-4">
             <a
-              href="https://discord.gg/P6agT4xbAm"
+              href={discordUrl}
               target="_blank"
               rel="noreferrer"
               className="cursor-target bg-core-ember px-7 py-3 font-display uppercase tracking-wide text-void hover:bg-core-glow transition-colors"

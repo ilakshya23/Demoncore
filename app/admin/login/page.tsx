@@ -43,16 +43,16 @@ export default function AdminLoginPage() {
           {error && <p className="text-sm text-core-ember border border-core-ember/40 px-4 py-2.5">{error}</p>}
           <div>
             <label htmlFor="email" className="text-xs uppercase tracking-wide text-ash">Email</label>
-            <input id="email" name="email" type="email" required className="mt-2 w-full bg-obsidian border border-white/15 px-4 py-2.5 text-parchment focus:border-core-ember outline-none" />
+            <input id="email" name="email" type="email" required className="cursor-target mt-2 w-full bg-obsidian border border-white/15 px-4 py-2.5 text-parchment focus:border-core-ember outline-none" />
           </div>
           <div>
             <label htmlFor="password" className="text-xs uppercase tracking-wide text-ash">Password</label>
-            <input id="password" name="password" type="password" required className="mt-2 w-full bg-obsidian border border-white/15 px-4 py-2.5 text-parchment focus:border-core-ember outline-none" />
+            <input id="password" name="password" type="password" required className="cursor-target mt-2 w-full bg-obsidian border border-white/15 px-4 py-2.5 text-parchment focus:border-core-ember outline-none" />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-core-ember text-void py-2.5 font-display uppercase tracking-wide hover:bg-core-glow transition-colors disabled:opacity-50"
+            className="cursor-target w-full bg-core-ember text-void py-2.5 font-display uppercase tracking-wide hover:bg-core-glow transition-colors disabled:opacity-50"
           >
             {loading ? 'Signing in…' : 'Sign In'}
           </button>

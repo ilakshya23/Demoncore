@@ -6,7 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 const schema = z.object({
   name: z.string().min(1).max(100),
   email: z.string().email(),
-  subject: z.string().max(150).optional(),
+  subject: z.string().min(1).max(150),
   message: z.string().min(1).max(5000),
 });
 

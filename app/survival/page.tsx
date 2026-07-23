@@ -22,12 +22,12 @@ export default async function SurvivalPage() {
 
       <section className="mx-auto max-w-6xl px-6 py-20">
         <Reveal><h2 className="font-display text-2xl md:text-3xl text-parchment mb-8">Ranks</h2></Reveal>
-        <RanksGrid ranks={ranks} accent={ACCENT} />
+        <RanksGrid ranks={ranks} server="survival" />
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-20 border-t border-white/10">
         <Reveal><h2 className="font-display text-2xl md:text-3xl text-parchment mb-8">Crate Keys</h2></Reveal>
-        <CrateKeysGrid keys={keys} accent={ACCENT} />
+        <CrateKeysGrid keys={keys} server="survival" />
       </section>
 
       <section className="mx-auto max-w-3xl px-6 py-20 border-t border-white/10">

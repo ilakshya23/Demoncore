@@ -1,8 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from 'react';
 import { gsap } from 'gsap';
 import './TargetCursor.css';
+import { getSelectedIcon, subscribeSelectedIcon } from './hudSelection';
+
+const getServerSnapshot = () => null;
 
 // A position: fixed element is positioned relative to the viewport UNLESS an
 // ancestor establishes a containing block (transform, perspective, filter,
@@ -41,6 +44,7 @@ export default function TargetCursor({
   parallaxOn = true,
   cursorColor = '#ffffff',
   cursorColorOnTarget,
+  dotImage: dotImageProp,
 }: {
   targetSelector?: string;
   hideDefaultCursor?: boolean;
@@ -48,10 +52,17 @@ export default function TargetCursor({
   parallaxOn?: boolean;
   cursorColor?: string;
   cursorColorOnTarget?: string;
+  /** Optional image URL to use for the center crosshair mark instead of the default plus shape. */
+  dotImage?: string;
 }) {
+  const liveIcon = useSyncExternalStore(subscribeSelectedIcon, getSelectedIcon, getServerSnapshot);
+  const dotImage = liveIcon ?? dotImageProp;
+  const dotImageRef = useRef(dotImage);
+  dotImageRef.current = dotImage;
+
   const cursorRef = useRef<HTMLDivElement>(null);
   const cornersRef = useRef<NodeListOf<Element> | null>(null);
-  const dotRef = useRef<HTMLDivElement>(null);
+  const dotRef = useRef<HTMLDivElement | HTMLImageElement>(null);
   const containingBlockRef = useRef<HTMLElement | null>(null);
 
   const isActiveRef = useRef(false);
@@ -94,6 +105,7 @@ export default function TargetCursor({
     const originalCursor = document.body.style.cursor;
     if (hideDefaultCursor) {
       document.body.style.cursor = 'none';
+      document.body.classList.add('custom-cursor-active');
     }
 
     const cursor = cursorRef.current;
@@ -218,7 +230,7 @@ export default function TargetCursor({
           duration: 0.15,
           ease: 'power2.out',
         });
-        if (dotRef.current) {
+        if (dotRef.current && !dotImageRef.current) {
           gsap.to(dotRef.current, {
             backgroundColor: cursorColorOnTarget,
             duration: 0.15,
@@ -272,7 +284,7 @@ export default function TargetCursor({
             duration: 0.15,
             ease: 'power2.out',
           });
-          if (dotRef.current) {
+          if (dotRef.current && !dotImageRef.current) {
             gsap.to(dotRef.current, {
               backgroundColor: cursorColor,
               duration: 0.15,
@@ -337,6 +349,7 @@ export default function TargetCursor({
       }
 
       document.body.style.cursor = originalCursor;
+      document.body.classList.remove('custom-cursor-active');
 
       isActiveRef.current = false;
       targetCornerPositionsRef.current = null;
@@ -360,7 +373,12 @@ export default function TargetCursor({
 
   return (
     <div ref={cursorRef} className="target-cursor-wrapper">
-      <div ref={dotRef} className="target-cursor-dot" style={{ backgroundColor: cursorColor }} />
+      {dotImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img ref={dotRef as React.RefObject<HTMLImageElement>} src={dotImage} alt="" className="target-cursor-dot target-cursor-dot-image" />
+      ) : (
+        <div ref={dotRef as React.RefObject<HTMLDivElement>} className="target-cursor-dot" style={{ backgroundColor: cursorColor }} />
+      )}
       <div className="target-cursor-corner corner-tl" style={{ borderColor: cursorColor }} />
       <div className="target-cursor-corner corner-tr" style={{ borderColor: cursorColor }} />
       <div className="target-cursor-corner corner-br" style={{ borderColor: cursorColor }} />

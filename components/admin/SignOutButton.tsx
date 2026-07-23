@@ -15,7 +15,7 @@ export function SignOutButton() {
   return (
     <button
       onClick={handleSignOut}
-      className="text-xs uppercase tracking-wide text-ash hover:text-core-ember transition-colors"
+      className="cursor-target text-xs uppercase tracking-wide text-ash hover:text-core-ember transition-colors"
     >
       Sign Out
     </button>

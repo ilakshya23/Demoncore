@@ -6,7 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 const schema = z.object({
   inGameName: z.string().min(1).max(50),
   discordTag: z.string().min(1).max(50),
-  age: z.number().int().min(10).max(120).optional(),
+  age: z.number().int().min(10).max(120),
   position: z.string().min(1).max(50),
   experience: z.string().min(1).max(3000),
   whyYou: z.string().min(1).max(3000),

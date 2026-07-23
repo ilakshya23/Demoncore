@@ -6,6 +6,7 @@ import { Reveal } from '@/components/Reveal';
 import { Rays } from '@/components/home/Rays';
 import DotField from '@/components/DotField';
 import { FocusGrid } from '@/components/FocusGrid';
+import type { SiteLink } from '@/lib/queries';
 
 const MODES = [
   { name: 'Survival Mode', copy: 'Build your empire, explore vast landscapes, and survive with other players. Farm resources, craft items, and establish your dominance in the peaceful realm.' },
@@ -120,11 +121,14 @@ export function Season2Features() {
   );
 }
 
-export function ServerInfo() {
-  const addresses = [
-    { label: 'Java Edition', value: 'play.demoncoremc.fun:25577' },
-    { label: 'Bedrock Edition', value: 'play.demoncoremc.fun:19176' },
-  ];
+export function ServerInfo({ discordUrl, addresses: siteAddresses }: { discordUrl: string; addresses: SiteLink[] }) {
+  const addresses =
+    siteAddresses.length > 0
+      ? siteAddresses.map((a) => ({ label: a.label, value: a.url }))
+      : [
+          { label: 'Java Edition', value: 'play.demoncoremc.fun:25577' },
+          { label: 'Bedrock Edition', value: 'play.demoncoremc.fun:19176' },
+        ];
   const stats = [
     { label: 'Version', value: '1.21.11' },
     { label: 'Location', value: 'Server India' },
@@ -165,7 +169,7 @@ export function ServerInfo() {
 
         <Reveal delay={0.55} className="mt-10">
           <a
-            href="https://discord.gg/P6agT4xbAm"
+            href={discordUrl}
             target="_blank"
             rel="noreferrer"
             className="cursor-target block text-center bg-core-ember text-void py-3 font-display uppercase tracking-wide hover:bg-core-glow transition-colors"
@@ -222,7 +226,7 @@ export function About() {
   );
 }
 
-export function JoinCTA() {
+export function JoinCTA({ discordUrl }: { discordUrl: string }) {
   return (
     <section className="mx-auto max-w-4xl px-6 py-24 text-center">
       <CrackDivider />
@@ -238,7 +242,7 @@ export function JoinCTA() {
           <a href="/#server-info" className="cursor-target bg-core-ember px-7 py-3 font-display uppercase tracking-wide text-void hover:bg-core-glow transition-colors">
             Join Server
           </a>
-          <a href="https://discord.gg/P6agT4xbAm" target="_blank" rel="noreferrer" className="cursor-target border border-white/20 px-7 py-3 font-display uppercase tracking-wide text-parchment hover:border-core-ember transition-colors">
+          <a href={discordUrl} target="_blank" rel="noreferrer" className="cursor-target border border-white/20 px-7 py-3 font-display uppercase tracking-wide text-parchment hover:border-core-ember transition-colors">
             Discord Community
           </a>
         </div>

@@ -22,7 +22,7 @@ export function Nav() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-void/80 backdrop-blur-md">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link href="/" aria-label="DEMONCORE MC home">
+        <Link href="/" aria-label="DEMONCORE MC home" className="cursor-target">
           <Logo />
         </Link>
 
@@ -33,7 +33,7 @@ export function Nav() {
               <li key={link.href} className="relative">
                 <Link
                   href={link.href}
-                  className={`transition-colors ${active ? 'text-parchment' : 'text-ash hover:text-parchment'}`}
+                  className={`cursor-target transition-colors ${active ? 'text-parchment' : 'text-ash hover:text-parchment'}`}
                 >
                   {link.label}
                 </Link>
@@ -49,7 +49,7 @@ export function Nav() {
         </ul>
 
         <button
-          className="md:hidden text-parchment text-sm border border-white/20 px-3 py-1.5"
+          className="cursor-target md:hidden text-parchment text-sm border border-white/20 px-3 py-1.5"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-label="Toggle menu"
@@ -67,7 +67,7 @@ export function Nav() {
         >
           {LINKS.map((link) => (
             <li key={link.href}>
-              <Link href={link.href} className="block text-parchment" onClick={() => setOpen(false)}>
+              <Link href={link.href} className="cursor-target block text-parchment" onClick={() => setOpen(false)}>
                 {link.label}
               </Link>
             </li>

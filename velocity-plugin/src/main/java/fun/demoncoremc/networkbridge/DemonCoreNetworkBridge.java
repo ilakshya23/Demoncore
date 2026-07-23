@@ -81,12 +81,25 @@ public class DemonCoreNetworkBridge {
 
         apiUrl = props.getProperty("api-url", "");
         apiKey = props.getProperty("api-key", "");
-        intervalSeconds = Integer.parseInt(props.getProperty("interval-seconds", "15"));
+
+        int parsedInterval;
+        try {
+            parsedInterval = Integer.parseInt(props.getProperty("interval-seconds", "15").trim());
+            if (parsedInterval <= 0) throw new NumberFormatException("must be positive");
+        } catch (NumberFormatException e) {
+            logger.warn("Invalid interval-seconds in config.properties ({}) — falling back to 15.", e.getMessage());
+            parsedInterval = 15;
+        }
+        intervalSeconds = parsedInterval;
     }
 
     private void reportStats() {
         if (apiUrl.isBlank() || apiKey.isBlank() || apiUrl.contains("your-domain.example")) {
             logger.warn("DemonCoreNetworkBridge is not configured yet — edit config.properties in the plugin data folder.");
+            return;
+        }
+        if (!apiUrl.startsWith("https://")) {
+            logger.warn("api-url must use https:// — refusing to send the plugin key over an unencrypted connection.");
             return;
         }
 

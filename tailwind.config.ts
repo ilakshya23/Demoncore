@@ -39,10 +39,15 @@ const config: Config = {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },
+        marquee: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
       },
       animation: {
         emberPulse: 'emberPulse 2.4s ease-in-out infinite',
         crackTravel: 'crackTravel 3.5s linear infinite',
+        marquee: 'marquee 16s linear infinite',
       },
     },
   },

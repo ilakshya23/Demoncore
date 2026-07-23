@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, memo } from 'react';
+import { useEffect, useRef, useId, memo } from 'react';
 import './DotField.css';
 
 const TWO_PI = Math.PI * 2;
@@ -46,7 +46,10 @@ const DotField = memo(function DotField({
   const propsRef = useRef<any>({});
   propsRef.current = { dotRadius, dotSpacing, cursorRadius, cursorForce, bulgeOnly, bulgeStrength, sparkle, waveAmplitude, gradientFrom, gradientTo };
   const rebuildRef = useRef<(() => void) | null>(null);
-  const glowIdRef = useRef(`dot-field-glow-${Math.random().toString(36).slice(2, 9)}`);
+  // useId (not Math.random) — must match between the server-rendered HTML and
+  // the client's hydration pass, or React throws a hydration mismatch that
+  // corrupts Next.js's client-side navigation cache for the rest of the session.
+  const glowId = `dot-field-glow-${useId().replace(/:/g, '')}`;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -267,7 +270,7 @@ const DotField = memo(function DotField({
         }}
       >
         <defs>
-          <radialGradient id={glowIdRef.current}>
+          <radialGradient id={glowId}>
             <stop offset="0%" stopColor={glowColor} />
             <stop offset="100%" stopColor="transparent" />
           </radialGradient>
@@ -277,7 +280,7 @@ const DotField = memo(function DotField({
           cx={-9999}
           cy={-9999}
           r={glowRadius}
-          fill={`url(#${glowIdRef.current})`}
+          fill={`url(#${glowId})`}
           style={{ opacity: 0, willChange: 'opacity' }}
         />
       </svg>

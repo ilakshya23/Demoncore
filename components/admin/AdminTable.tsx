@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui';
+import { StaffSkinField } from '@/components/admin/StaffSkinField';
 
-export type FieldType = 'text' | 'textarea' | 'number' | 'list' | 'color' | 'select';
+export type FieldType = 'text' | 'textarea' | 'number' | 'list' | 'color' | 'select' | 'staff-skin';
 
 export type FieldConfig = {
   key: string;
@@ -18,7 +19,13 @@ type Row = Record<string, any>;
 function emptyRowFrom(fields: FieldConfig[], fixed: Row): Row {
   const row: Row = { ...fixed };
   for (const f of fields) {
-    row[f.key] = f.type === 'list' ? [] : f.type === 'number' ? 0 : '';
+    // 'staff-skin' is a compound UI over two real columns, not a column itself.
+    if (f.type === 'staff-skin') {
+      row.minecraft_username = '';
+      row.skin_url = '';
+    } else {
+      row[f.key] = f.type === 'list' ? [] : f.type === 'number' ? 0 : '';
+    }
   }
   return row;
 }
@@ -117,7 +124,7 @@ export function AdminTable({
         <h1 className="font-display text-2xl text-parchment">{title}</h1>
         <button
           onClick={handleAdd}
-          className="border border-core-ember px-4 py-2 text-xs uppercase tracking-wide text-core-ember hover:bg-core-ember hover:text-void transition-colors"
+          className="cursor-target border border-core-ember px-4 py-2 text-xs uppercase tracking-wide text-core-ember hover:bg-core-ember hover:text-void transition-colors"
         >
           Add New
         </button>
@@ -138,19 +145,34 @@ export function AdminTable({
       ) : (
         <div className="space-y-4">
           {rows.map((row) => (
-            <div key={row.id} className="border border-white/10 p-5">
+            <div
+              key={row.id}
+              className="border border-white/10 hover:border-core-ember/60 focus-within:border-core-ember p-5 transition-colors"
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {fields.map((field) => (
-                  <FieldInput
-                    key={field.key}
-                    field={field}
-                    value={row[field.key]}
-                    onChange={(value) => {
-                      updateLocal(row.id, { [field.key]: value });
-                      persist(row.id, { [field.key]: value });
-                    }}
-                  />
-                ))}
+                {fields.map((field) =>
+                  field.type === 'staff-skin' ? (
+                    <StaffSkinField
+                      key={field.key}
+                      minecraftUsername={row.minecraft_username ?? ''}
+                      skinUrl={row.skin_url ?? ''}
+                      onChange={(patch) => {
+                        updateLocal(row.id, patch);
+                        persist(row.id, patch);
+                      }}
+                    />
+                  ) : (
+                    <FieldInput
+                      key={field.key}
+                      field={field}
+                      value={row[field.key]}
+                      onChange={(value) => {
+                        updateLocal(row.id, { [field.key]: value });
+                        persist(row.id, { [field.key]: value });
+                      }}
+                    />
+                  )
+                )}
               </div>
               <div className="mt-3 flex items-center justify-between">
                 <span className="text-xs text-ash">
@@ -158,7 +180,7 @@ export function AdminTable({
                 </span>
                 <button
                   onClick={() => handleDelete(row.id)}
-                  className="text-xs uppercase tracking-wide text-ash hover:text-core-ember transition-colors"
+                  className="cursor-target text-xs uppercase tracking-wide text-ash hover:text-core-ember transition-colors"
                 >
                   Delete
                 </button>
@@ -207,7 +229,7 @@ function FieldInput({
           onBlur={commit}
           rows={field.type === 'list' ? 4 : 3}
           placeholder={field.type === 'list' ? 'One item per line' : field.placeholder}
-          className="mt-1.5 w-full bg-obsidian border border-white/15 px-3 py-2 text-sm text-parchment focus:border-core-ember outline-none resize-none"
+          className="cursor-target mt-1.5 w-full bg-obsidian border border-white/15 px-3 py-2 text-sm text-parchment focus:border-core-ember outline-none resize-none"
         />
       ) : field.type === 'select' ? (
         <select
@@ -216,7 +238,7 @@ function FieldInput({
             setLocal(e.target.value);
             onChange(e.target.value);
           }}
-          className="mt-1.5 w-full bg-obsidian border border-white/15 px-3 py-2 text-sm text-parchment focus:border-core-ember outline-none"
+          className="cursor-target mt-1.5 w-full bg-obsidian border border-white/15 px-3 py-2 text-sm text-parchment focus:border-core-ember outline-none"
         >
           {field.options?.map((opt) => (
             <option key={opt} value={opt}>{opt}</option>
@@ -229,7 +251,7 @@ function FieldInput({
           onChange={(e) => setLocal(e.target.value)}
           onBlur={commit}
           placeholder={field.placeholder}
-          className="mt-1.5 w-full bg-obsidian border border-white/15 px-3 py-2 text-sm text-parchment focus:border-core-ember outline-none"
+          className="cursor-target mt-1.5 w-full bg-obsidian border border-white/15 px-3 py-2 text-sm text-parchment focus:border-core-ember outline-none"
         />
       )}
     </div>

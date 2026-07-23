@@ -62,7 +62,7 @@ export function Typewriter({
           {i < visibleLines.length - 1 && <br />}
         </span>
       ))}
-      <span className={`inline-block w-[0.5ch] ${done ? 'animate-emberPulse' : 'opacity-100'}`}>▌</span>
+      <span className={`inline-block w-[0.15ch] overflow-hidden ${done ? 'animate-emberPulse' : 'opacity-100'}`}>▌</span>
     </span>
   );
 }

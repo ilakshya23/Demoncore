@@ -33,6 +33,13 @@ export default function AdminApplicationsPage() {
     });
   }
 
+  async function remove(id: string) {
+    const prevRows = rows;
+    setRows((prev) => (prev ? prev.filter((r) => r.id !== id) : prev)); // optimistic
+    const res = await fetch(`/api/admin/staff_applications?id=${id}`, { method: 'DELETE' });
+    if (!res.ok) setRows(prevRows); // rollback
+  }
+
   return (
     <div>
       <h1 className="font-display text-2xl text-parchment mb-6">Staff Applications</h1>
@@ -45,25 +52,31 @@ export default function AdminApplicationsPage() {
       ) : (
         <div className="space-y-4">
           {rows.map((r) => (
-            <div key={r.id} className="border border-white/10 p-5">
+            <div key={r.id} className="border border-white/10 hover:border-core-ember/60 focus-within:border-core-ember p-5 transition-colors">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <span className="text-parchment font-display">{r.in_game_name}</span>
                   <span className="text-ash text-sm ml-2">{r.discord_tag}</span>
                   <span className="text-core-ember text-xs uppercase tracking-wide ml-3">{r.position}</span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   {['reviewed', 'accepted', 'rejected'].map((s) => (
                     <button
                       key={s}
                       onClick={() => setStatus(r.id, s)}
-                      className={`text-xs uppercase tracking-wide px-2.5 py-1 border ${
+                      className={`cursor-target text-xs uppercase tracking-wide px-2.5 py-1 border ${
                         r.status === s ? 'border-core-ember text-core-ember' : 'border-white/15 text-ash hover:text-parchment'
                       }`}
                     >
                       {s}
                     </button>
                   ))}
+                  <button
+                    onClick={() => remove(r.id)}
+                    className="cursor-target text-xs uppercase tracking-wide text-ash hover:text-core-ember px-2.5 py-1"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
               <p className="text-sm text-ash mt-3"><span className="text-parchment">Experience:</span> {r.experience}</p>

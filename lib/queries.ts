@@ -2,21 +2,24 @@ import { supabasePublic } from './supabase';
 
 export type Rank = {
   id: string;
-  gamemode: 'survival' | 'lifesteal';
+  server: 'survival' | 'lifesteal';
   name: string;
-  price_label: string | null;
+  price: number | null;
+  checkout_url: string | null;
   sort_order: number;
   perks: string[];
-  color_hex: string;
+  color_code: string | null;
 };
 
 export type CrateKey = {
   id: string;
-  gamemode: 'survival' | 'lifesteal';
+  server: 'survival' | 'lifesteal';
   name: string;
-  price_label: string | null;
+  price: number | null;
+  checkout_url: string | null;
+  image: string | null;
   sort_order: number;
-  contents: string[];
+  contents: string | null;
 };
 
 export type StaffMember = {
@@ -24,14 +27,17 @@ export type StaffMember = {
   name: string;
   role: string;
   bio: string | null;
-  avatar_url: string | null;
+  minecraft_username: string | null;
+  skin_url: string | null;
   sort_order: number;
 };
 
 export type RuleSection = {
   id: string;
-  section_title: string;
+  title: string;
   body: string;
+  category: 'server' | 'discord';
+  group_label: string | null;
   sort_order: number;
 };
 
@@ -54,53 +60,44 @@ export type SiteLink = {
   sort_order: number;
 };
 
-export type SeasonWinner = {
-  id: string;
-  season_label: string;
-  gamemode: string | null;
-  category: string;
-  player_name: string;
-  sort_order: number;
-};
-
 // Fallback content so pages render sensibly before the admin panel (Phase 3)
 // has been used to populate real data.
 const FALLBACK_RANKS: Record<string, Rank[]> = {
   survival: [
-    { id: 'f1', gamemode: 'survival', name: 'Adventurer', price_label: '₹99', sort_order: 1, perks: ['/kit adventurer', '2 homes', 'Colored chat'], color_hex: '#4C9A6A' },
-    { id: 'f2', gamemode: 'survival', name: 'Champion', price_label: '₹249', sort_order: 2, perks: ['/kit champion', '5 homes', '/fly in own claim'], color_hex: '#4C9A6A' },
+    { id: 'f1', server: 'survival', name: 'Adventurer', price: 99, checkout_url: null, sort_order: 1, perks: ['/kit adventurer', '2 homes', 'Colored chat'], color_code: null },
+    { id: 'f2', server: 'survival', name: 'Champion', price: 249, checkout_url: null, sort_order: 2, perks: ['/kit champion', '5 homes', '/fly in own claim'], color_code: null },
   ],
   lifesteal: [
-    { id: 'f3', gamemode: 'lifesteal', name: 'Reaper', price_label: '₹149', sort_order: 1, perks: ['+2 max hearts on join', '/kit reaper'], color_hex: '#C81E3A' },
+    { id: 'f3', server: 'lifesteal', name: 'Reaper', price: 149, checkout_url: null, sort_order: 1, perks: ['+2 max hearts on join', '/kit reaper'], color_code: null },
   ],
 };
 
 const FALLBACK_CRATES: Record<string, CrateKey[]> = {
   survival: [
-    { id: 'c1', gamemode: 'survival', name: 'Common Key', price_label: '₹49', sort_order: 1, contents: ['Rare tools', 'Cosmetic dyes'] },
+    { id: 'c1', server: 'survival', name: 'Common Key', price: 49, checkout_url: null, image: null, sort_order: 1, contents: 'Rare tools, cosmetic dyes' },
   ],
   lifesteal: [
-    { id: 'c2', gamemode: 'lifesteal', name: 'Blood Key', price_label: '₹99', sort_order: 1, contents: ['Extra heart token', 'Combat gear'] },
+    { id: 'c2', server: 'lifesteal', name: 'Blood Key', price: 99, checkout_url: null, image: null, sort_order: 1, contents: 'Extra heart token, combat gear' },
   ],
 };
 
-export async function getRanks(gamemode: 'survival' | 'lifesteal'): Promise<Rank[]> {
+export async function getRanks(server: 'survival' | 'lifesteal'): Promise<Rank[]> {
   const { data, error } = await supabasePublic
     .from('ranks')
     .select('*')
-    .eq('gamemode', gamemode)
+    .eq('server', server)
     .order('sort_order', { ascending: true });
-  if (error || !data || data.length === 0) return FALLBACK_RANKS[gamemode] ?? [];
+  if (error || !data || data.length === 0) return FALLBACK_RANKS[server] ?? [];
   return data as Rank[];
 }
 
-export async function getCrateKeys(gamemode: 'survival' | 'lifesteal'): Promise<CrateKey[]> {
+export async function getCrateKeys(server: 'survival' | 'lifesteal'): Promise<CrateKey[]> {
   const { data, error } = await supabasePublic
     .from('crate_keys')
     .select('*')
-    .eq('gamemode', gamemode)
+    .eq('server', server)
     .order('sort_order', { ascending: true });
-  if (error || !data || data.length === 0) return FALLBACK_CRATES[gamemode] ?? [];
+  if (error || !data || data.length === 0) return FALLBACK_CRATES[server] ?? [];
   return data as CrateKey[];
 }
 
@@ -140,7 +137,10 @@ export async function getSiteLinks(group: 'server' | 'social'): Promise<SiteLink
   return (data as SiteLink[]) ?? [];
 }
 
-export async function getSeasonWinners(): Promise<SeasonWinner[]> {
-  const { data } = await supabasePublic.from('season_winners').select('*').order('sort_order', { ascending: true });
-  return (data as SeasonWinner[]) ?? [];
+const FALLBACK_DISCORD_URL = 'https://discord.gg/P6agT4xbAm';
+
+export async function getDiscordUrl(): Promise<string> {
+  const links = await getSiteLinks('social');
+  return links.find((l) => l.label.toLowerCase().includes('discord'))?.url || FALLBACK_DISCORD_URL;
 }
+

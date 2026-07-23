@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MinecraftPanel, MinecraftField, MinecraftInput, MinecraftTextarea, MinecraftButton } from './MinecraftForm';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
 
@@ -37,63 +38,44 @@ export function ContactForm() {
   }
 
   return (
-    <div className="relative">
+    <MinecraftPanel className="relative">
       <AnimatePresence mode="wait">
         {status === 'sent' ? (
-          <motion.div
-            key="sent"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="border border-core-ember/40 bg-core-ember/5 p-10 text-center"
-          >
-            <h3 className="font-display text-xl text-parchment">Message sent</h3>
-            <p className="text-ash text-sm mt-2">
-              We'll get back to you by email as soon as we can.
-            </p>
+          <motion.div key="sent" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-6">
+            <h3 className="font-display text-xl text-black">Message sent</h3>
+            <p className="text-black/60 text-sm mt-2">We'll get back to you by email as soon as we can.</p>
             <button
               onClick={() => setStatus('idle')}
-              className="cursor-target mt-6 text-xs uppercase tracking-wide text-core-ember hover:text-core-glow"
+              className="cursor-target mt-6 text-xs uppercase tracking-wide text-black underline hover:no-underline"
             >
               Send another message
             </button>
           </motion.div>
         ) : (
-          <motion.form
-            key="form"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            onSubmit={handleSubmit}
-            className="space-y-5"
-          >
+          <motion.form key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} onSubmit={handleSubmit} className="space-y-5">
             {status === 'error' && (
-              <p className="text-sm text-core-ember border border-core-ember/40 px-4 py-3">
+              <p className="text-sm text-red-900 bg-red-900/10 border-2 border-red-900/40 px-4 py-3">
                 That message didn't reach us — mind trying again?
               </p>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label htmlFor="name" className="text-xs uppercase tracking-wide text-ash">Name</label>
-                <input id="name" name="name" required className="mt-2 w-full bg-obsidian border border-white/15 px-4 py-2.5 text-parchment focus:border-core-ember outline-none" />
-              </div>
-              <div>
-                <label htmlFor="email" className="text-xs uppercase tracking-wide text-ash">Email</label>
-                <input id="email" name="email" type="email" required className="mt-2 w-full bg-obsidian border border-white/15 px-4 py-2.5 text-parchment focus:border-core-ember outline-none" />
-              </div>
+              <MinecraftField label="Name">
+                <MinecraftInput id="name" name="name" required />
+              </MinecraftField>
+              <MinecraftField label="Email">
+                <MinecraftInput id="email" name="email" type="email" required />
+              </MinecraftField>
             </div>
-            <div>
-              <label htmlFor="subject" className="text-xs uppercase tracking-wide text-ash">Subject</label>
-              <input id="subject" name="subject" className="mt-2 w-full bg-obsidian border border-white/15 px-4 py-2.5 text-parchment focus:border-core-ember outline-none" />
-            </div>
-            <div>
-              <label htmlFor="message" className="text-xs uppercase tracking-wide text-ash">Message</label>
-              <textarea id="message" name="message" required rows={6} className="mt-2 w-full bg-obsidian border border-white/15 px-4 py-2.5 text-parchment focus:border-core-ember outline-none resize-none" />
-            </div>
-            <button type="submit" className="cursor-target bg-core-ember text-void px-7 py-3 font-display uppercase tracking-wide hover:bg-core-glow transition-colors">
-              Send Message
-            </button>
+            <MinecraftField label="Subject">
+              <MinecraftInput id="subject" name="subject" required />
+            </MinecraftField>
+            <MinecraftField label="Message">
+              <MinecraftTextarea id="message" name="message" required rows={6} />
+            </MinecraftField>
+            <MinecraftButton type="submit">Send Message</MinecraftButton>
           </motion.form>
         )}
       </AnimatePresence>
-    </div>
+    </MinecraftPanel>
   );
 }
