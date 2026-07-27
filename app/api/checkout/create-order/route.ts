@@ -47,12 +47,12 @@ export async function POST(req: NextRequest) {
 
   // No Razorpay keys configured — the checkout page falls back to a plain
   // "submit order, we'll follow up" flow with no payment step.
-  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+  if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
     return NextResponse.json({ purchaseId: purchase.id, razorpay: null });
   }
 
   const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
+    key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
   });
 
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       purchaseId: purchase.id,
-      razorpay: { orderId: order.id, amount: order.amount, currency: order.currency, keyId: process.env.RAZORPAY_KEY_ID },
+      razorpay: { orderId: order.id, amount: order.amount, currency: order.currency, keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID },
     });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Could not create payment order' }, { status: 500 });

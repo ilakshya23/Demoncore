@@ -39,7 +39,7 @@ export default async function CheckoutPage({
   const item = parseItem(searchParams);
   if (!item) redirect('/shop');
 
-  const paymentsEnabled = Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
+  const paymentsEnabled = Boolean(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
 
   return (
     <div className="relative isolate min-h-[80vh]">
