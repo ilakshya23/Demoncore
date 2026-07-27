@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Polls the DEMONCORE MC website every `poll-interval-seconds` for orders
@@ -50,6 +51,10 @@ public class DemonCoreDeliveryBridge extends JavaPlugin {
     private int titleFadeIn;
     private int titleStay;
     private int titleFadeOut;
+
+    // Same failure/attempt happening every 10s during an outage isn't new
+    // information — only log the first occurrence and the recovery.
+    private final AtomicBoolean isFailing = new AtomicBoolean(false);
 
     @Override
     public void onEnable() {
@@ -130,9 +135,10 @@ public class DemonCoreDeliveryBridge extends JavaPlugin {
         try {
             HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
-                getLogger().warning("pending-deliveries failed with HTTP " + response.statusCode());
+                logFailureOnce("pending-deliveries failed with HTTP " + response.statusCode());
                 return;
             }
+            logRecoveryIfNeeded();
 
             JsonObject body = JsonParser.parseString(response.body()).getAsJsonObject();
             JsonArray deliveries = body.getAsJsonArray("deliveries");
@@ -156,7 +162,19 @@ public class DemonCoreDeliveryBridge extends JavaPlugin {
                 ackDelivered(id);
             }
         } catch (Exception e) {
-            getLogger().warning("pending-deliveries poll failed: " + e.getMessage());
+            logFailureOnce("pending-deliveries poll failed: " + e.getMessage());
+        }
+    }
+
+    private void logFailureOnce(String message) {
+        if (isFailing.compareAndSet(false, true)) {
+            getLogger().warning(message + " (further failures logged only on recovery)");
+        }
+    }
+
+    private void logRecoveryIfNeeded() {
+        if (isFailing.compareAndSet(true, false)) {
+            getLogger().info("DemonCoreDeliveryBridge: pending-deliveries polling recovered.");
         }
     }
 

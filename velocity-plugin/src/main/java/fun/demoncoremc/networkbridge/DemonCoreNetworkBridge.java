@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.util.Properties;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Reports total + per-server player counts to the DEMONCORE MC website every
@@ -40,6 +41,13 @@ public class DemonCoreNetworkBridge {
     private String apiUrl;
     private String apiKey;
     private int intervalSeconds;
+
+    // Every report attempt runs on its own interval forever, but nothing about
+    // "still misconfigured" or "still failing" is new information after the
+    // first time — so only log on the first occurrence and again on recovery,
+    // instead of once per interval.
+    private final AtomicBoolean isFailing = new AtomicBoolean(false);
+    private boolean warnedNotConfigured = false;
 
     @Inject
     public DemonCoreNetworkBridge(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
@@ -95,11 +103,17 @@ public class DemonCoreNetworkBridge {
 
     private void reportStats() {
         if (apiUrl.isBlank() || apiKey.isBlank() || apiUrl.contains("your-domain.example")) {
-            logger.warn("DemonCoreNetworkBridge is not configured yet — edit config.properties in the plugin data folder.");
+            if (!warnedNotConfigured) {
+                logger.warn("DemonCoreNetworkBridge is not configured yet — edit config.properties in the plugin data folder. (This warning won't repeat.)");
+                warnedNotConfigured = true;
+            }
             return;
         }
         if (!apiUrl.startsWith("https://")) {
-            logger.warn("api-url must use https:// — refusing to send the plugin key over an unencrypted connection.");
+            if (!warnedNotConfigured) {
+                logger.warn("api-url must use https:// — refusing to send the plugin key over an unencrypted connection. (This warning won't repeat.)");
+                warnedNotConfigured = true;
+            }
             return;
         }
 
@@ -124,13 +138,27 @@ public class DemonCoreNetworkBridge {
         http.sendAsync(request, HttpResponse.BodyHandlers.discarding())
                 .thenAccept(response -> {
                     if (response.statusCode() != 200) {
-                        logger.warn("Stats report failed with HTTP {}", response.statusCode());
+                        logFailureOnce("Stats report failed with HTTP " + response.statusCode());
+                    } else {
+                        logRecoveryIfNeeded();
                     }
                 })
                 .exceptionally(err -> {
-                    logger.warn("Stats report failed: {}", err.getMessage());
+                    logFailureOnce("Stats report failed: " + err.getMessage());
                     return null;
                 });
+    }
+
+    private void logFailureOnce(String message) {
+        if (isFailing.compareAndSet(false, true)) {
+            logger.warn("{} (further failures logged only on recovery/status change)", message);
+        }
+    }
+
+    private void logRecoveryIfNeeded() {
+        if (isFailing.compareAndSet(true, false)) {
+            logger.info("DemonCoreNetworkBridge: stats reporting recovered.");
+        }
     }
 
     private static String escape(String value) {
