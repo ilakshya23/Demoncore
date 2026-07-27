@@ -21,7 +21,9 @@ not the proxy.
    panel, under fields like "Delivery Command") with `{player}`, `{quantity}`,
    `{amount}`, `{coins}` filled in — e.g. `lp user Notch parent add vip`.
 4. The plugin runs that command as console (`Bukkit.dispatchCommand`), then
-   calls `POST /api/plugin/mark-delivered` so it isn't delivered twice.
+   broadcasts a purchase announcement and shows the buyer (if online) a
+   title/subtitle — both fully editable in `config.properties` — then calls
+   `POST /api/plugin/mark-delivered` so it isn't delivered twice.
 
 Orders for items with **no Delivery Command configured** are silently
 skipped by the website (never returned to the plugin) — those stay in Admin →
@@ -78,11 +80,27 @@ This produces `target/DemonCoreDeliveryBridge.jar`.
    api-key=SAME-VALUE-AS-PLUGIN_API_KEY-ON-VERCEL
    server-key=survival
    poll-interval-seconds=10
+
+   # Server-wide chat message on every delivered purchase. Placeholders:
+   # {player} = buyer's Minecraft username, {item} = item name (e.g. "Common Key").
+   broadcast-enabled=true
+   broadcast-message=&6{player} &fjust purchased &6{item}&f! Thank you for supporting the server!
+
+   # Title/subtitle shown to the buyer, only if they're online. Same
+   # placeholders. Fade-in/stay/fade-out are in ticks (20 = 1 second).
+   title-enabled=true
+   title-text=&6&lTHANK YOU!
+   subtitle-text=&fYou received: &6{item}
+   title-fade-in=10
+   title-stay=60
+   title-fade-out=10
    ```
 
    `server-key` must be `survival` or `lifesteal` and match which server
    this install is on. `api-key` must exactly match `PLUGIN_API_KEY` in the
-   website's env vars.
+   website's env vars. `&` color codes work in both the broadcast and the
+   title/subtitle. Set `broadcast-enabled`/`title-enabled` to `false` to turn
+   either off without deleting the text.
 
 4. Repeat for the other gamemode server with its own `server-key`.
 5. Start the servers again.
