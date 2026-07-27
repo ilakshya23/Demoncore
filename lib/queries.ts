@@ -27,9 +27,31 @@ export type StaffMember = {
   name: string;
   role: string;
   bio: string | null;
-  minecraft_username: string | null;
-  skin_url: string | null;
+  avatar_url: string | null;
   sort_order: number;
+  instagram_url: string | null;
+  youtube_url: string | null;
+  discord_url: string | null;
+};
+
+export type MediaCreator = {
+  id: string;
+  creator_name: string;
+  real_name: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  sort_order: number;
+  instagram_url: string | null;
+  youtube_url: string | null;
+  discord_url: string | null;
+};
+
+export type CoinPackage = {
+  id: string;
+  server: 'survival' | 'lifesteal';
+  slot_number: number;
+  coins: number;
+  price: number;
 };
 
 export type RuleSection = {
@@ -101,9 +123,34 @@ export async function getCrateKeys(server: 'survival' | 'lifesteal'): Promise<Cr
   return data as CrateKey[];
 }
 
+const FALLBACK_COINS: Record<string, CoinPackage[]> = {
+  survival: [50, 100, 250, 500, 1000, 2000, 3500, 5000].map((coins, i) => ({
+    id: `coin${i + 1}`,
+    server: 'survival',
+    slot_number: i + 1,
+    coins,
+    price: coins * 2,
+  })),
+};
+
+export async function getCoinPackages(server: 'survival' | 'lifesteal'): Promise<CoinPackage[]> {
+  const { data, error } = await supabasePublic
+    .from('coin_packages')
+    .select('*')
+    .eq('server', server)
+    .order('slot_number', { ascending: true });
+  if (error || !data || data.length === 0) return FALLBACK_COINS[server] ?? [];
+  return data as CoinPackage[];
+}
+
 export async function getStaff(): Promise<StaffMember[]> {
   const { data } = await supabasePublic.from('staff_members').select('*').order('sort_order', { ascending: true });
   return (data as StaffMember[]) ?? [];
+}
+
+export async function getMediaCreators(): Promise<MediaCreator[]> {
+  const { data } = await supabasePublic.from('media_creators').select('*').order('sort_order', { ascending: true });
+  return (data as MediaCreator[]) ?? [];
 }
 
 export async function getRules(): Promise<RuleSection[]> {

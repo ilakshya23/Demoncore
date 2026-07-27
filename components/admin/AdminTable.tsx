@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui';
-import { StaffSkinField } from '@/components/admin/StaffSkinField';
 
-export type FieldType = 'text' | 'textarea' | 'number' | 'list' | 'color' | 'select' | 'staff-skin';
+export type FieldType = 'text' | 'textarea' | 'number' | 'list' | 'color' | 'select' | 'image';
 
 export type FieldConfig = {
   key: string;
@@ -19,13 +18,7 @@ type Row = Record<string, any>;
 function emptyRowFrom(fields: FieldConfig[], fixed: Row): Row {
   const row: Row = { ...fixed };
   for (const f of fields) {
-    // 'staff-skin' is a compound UI over two real columns, not a column itself.
-    if (f.type === 'staff-skin') {
-      row.minecraft_username = '';
-      row.skin_url = '';
-    } else {
-      row[f.key] = f.type === 'list' ? [] : f.type === 'number' ? 0 : '';
-    }
+    row[f.key] = f.type === 'list' ? [] : f.type === 'number' ? 0 : '';
   }
   return row;
 }
@@ -47,7 +40,11 @@ export function AdminTable({
 
   useEffect(() => {
     fetch(`/api/admin/${table}`)
-      .then((r) => r.json())
+      .then(async (r) => {
+        const data = await r.json().catch(() => null);
+        if (!r.ok) throw new Error(data?.error || `Could not load ${table}`);
+        return data;
+      })
       .then((data) => {
         const list = Array.isArray(data) ? data : [];
         const filtered = Object.keys(fixedValues).length
@@ -55,7 +52,7 @@ export function AdminTable({
           : list;
         setRows(filtered);
       })
-      .catch(() => setError('Could not load data'));
+      .catch((e) => setError(e.message || 'Could not load data'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table]);
 
@@ -71,9 +68,11 @@ export function AdminTable({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, ...patch }),
       });
-      if (!res.ok) throw new Error();
-    } catch {
-      setError('A change failed to save — refresh to check the current state.');
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error || 'Save failed');
+      setError(null);
+    } catch (e: any) {
+      setError(e.message || 'A change failed to save — refresh to check the current state.');
     } finally {
       setSavingIds((s) => {
         const next = new Set(s);
@@ -96,12 +95,13 @@ export function AdminTable({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(draft),
       });
-      if (!res.ok) throw new Error();
-      const created = await res.json();
+      const created = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(created?.error || 'Could not add a new row.');
       setRows((prev) => (prev ? prev.map((r) => (r.id === tempId ? created : r)) : prev));
-    } catch {
+      setError(null);
+    } catch (e: any) {
       setRows((prev) => (prev ? prev.filter((r) => r.id !== tempId) : prev));
-      setError('Could not add a new row.');
+      setError(e.message || 'Could not add a new row.');
     }
   }
 
@@ -111,10 +111,12 @@ export function AdminTable({
 
     try {
       const res = await fetch(`/api/admin/${table}?id=${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error();
-    } catch {
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error || 'Could not delete that row.');
+      setError(null);
+    } catch (e: any) {
       setRows(prevRows); // rollback
-      setError('Could not delete that row.');
+      setError(e.message || 'Could not delete that row.');
     }
   }
 
@@ -150,29 +152,17 @@ export function AdminTable({
               className="border border-white/10 hover:border-core-ember/60 focus-within:border-core-ember p-5 transition-colors"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {fields.map((field) =>
-                  field.type === 'staff-skin' ? (
-                    <StaffSkinField
-                      key={field.key}
-                      minecraftUsername={row.minecraft_username ?? ''}
-                      skinUrl={row.skin_url ?? ''}
-                      onChange={(patch) => {
-                        updateLocal(row.id, patch);
-                        persist(row.id, patch);
-                      }}
-                    />
-                  ) : (
-                    <FieldInput
-                      key={field.key}
-                      field={field}
-                      value={row[field.key]}
-                      onChange={(value) => {
-                        updateLocal(row.id, { [field.key]: value });
-                        persist(row.id, { [field.key]: value });
-                      }}
-                    />
-                  )
-                )}
+                {fields.map((field) => (
+                  <FieldInput
+                    key={field.key}
+                    field={field}
+                    value={row[field.key]}
+                    onChange={(value) => {
+                      updateLocal(row.id, { [field.key]: value });
+                      persist(row.id, { [field.key]: value });
+                    }}
+                  />
+                ))}
               </div>
               <div className="mt-3 flex items-center justify-between">
                 <span className="text-xs text-ash">
@@ -209,6 +199,9 @@ function FieldInput({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   const commit = () => {
     if (field.type === 'list') {
       onChange(local.split('\n').map((s: string) => s.trim()).filter(Boolean));
@@ -219,10 +212,52 @@ function FieldInput({
     }
   };
 
+  async function handleUpload(file: File) {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/admin/image-upload', { method: 'POST', body: form });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Upload failed');
+      setLocal(body.url);
+      onChange(body.url);
+    } catch (e: any) {
+      setUploadError(e.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <div>
       <label className="text-xs uppercase tracking-wide text-ash">{field.label}</label>
-      {field.type === 'textarea' || field.type === 'list' ? (
+      {field.type === 'image' ? (
+        <div className="mt-1.5 flex items-center gap-3">
+          <div className="h-16 w-16 shrink-0 bg-obsidian border border-white/15 flex items-center justify-center overflow-hidden">
+            {local ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={local} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-[10px] text-ash/50">No photo</span>
+            )}
+          </div>
+          <div>
+            <input
+              type="file"
+              accept="image/png,image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleUpload(file);
+              }}
+              className="cursor-target text-xs text-ash file:cursor-target file:mr-3 file:border file:border-white/15 file:bg-obsidian file:px-3 file:py-1.5 file:text-parchment file:text-xs"
+            />
+            {uploading && <p className="text-xs text-ash mt-1.5">Uploading…</p>}
+            {uploadError && <p className="text-xs text-core-ember mt-1.5">{uploadError}</p>}
+          </div>
+        </div>
+      ) : field.type === 'textarea' || field.type === 'list' ? (
         <textarea
           value={local}
           onChange={(e) => setLocal(e.target.value)}

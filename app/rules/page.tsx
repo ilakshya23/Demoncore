@@ -85,34 +85,36 @@ export default async function RulesPage() {
         title="Rules"
         subtitle="Breaking these rules may result in a warning, mute, kick, or ban depending on severity."
       />
-      <section className="mx-auto max-w-3xl px-6 pb-20 space-y-24">
-        <div>
-          <h2 className="font-display text-2xl md:text-3xl font-black uppercase text-parchment text-center">
-            Server Rules
-          </h2>
-          <p className="text-ash text-center text-sm mt-2">Stay stable. Avoid the Meltdown.</p>
-          <div className="mt-12">
-            <RuleList rules={serverRules} />
+      <section className="mx-auto max-w-6xl px-6 pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-12">
+          <div className="md:border-r md:border-white/10 md:pr-12">
+            <h2 className="font-display text-2xl md:text-3xl font-black uppercase text-parchment text-center">
+              Server Rules
+            </h2>
+            <p className="text-ash text-center text-sm mt-2">Stay stable. Avoid the Meltdown.</p>
+            <div className="mt-12">
+              <RuleList rules={serverRules} />
+            </div>
           </div>
-        </div>
 
-        <div className="border-t border-white/10 pt-20">
-          <h2 className="font-display text-2xl md:text-3xl font-black uppercase text-parchment text-center">
-            Discord Rules
-          </h2>
-          <p className="text-ash text-center text-sm mt-2">
-            Join the community —{' '}
-            <a
-              href={discordUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="cursor-target text-core-ember hover:text-core-glow"
-            >
-              {discordUrl.replace(/^https?:\/\//, '')}
-            </a>
-          </p>
-          <div className="mt-12">
-            <RuleList rules={discordRules} />
+          <div>
+            <h2 className="font-display text-2xl md:text-3xl font-black uppercase text-parchment text-center">
+              Discord Rules
+            </h2>
+            <p className="text-ash text-center text-sm mt-2">
+              Join the community —{' '}
+              <a
+                href={discordUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="cursor-target text-core-ember hover:text-core-glow"
+              >
+                {discordUrl.replace(/^https?:\/\//, '')}
+              </a>
+            </p>
+            <div className="mt-12">
+              <RuleList rules={discordRules} />
+            </div>
           </div>
         </div>
       </section>

@@ -64,7 +64,40 @@ alter table ranks add column if not exists color_code text;
 alter table crate_keys add column if not exists image text;
 alter table crate_keys add column if not exists sort_order int not null default 0;
 
+-- In-game console command the gamemode delivery plugin runs on payment,
+-- e.g. "lp user {player} parent add vip" or "eco give {player} {amount}".
+-- Blank = no auto-delivery for that item; staff fulfill it manually.
+alter table ranks add column if not exists command_template text;
+alter table crate_keys add column if not exists command_template text;
+
+-- ─── Coin packages (admin editable, per server) ─────────────────────────
+-- Fixed 8 slots per server (slot_number 1-8) so the admin panel always shows
+-- 8 configurable rows instead of an open-ended add/delete list. 2 INR = 1 coin.
+create table if not exists coin_packages (
+  id uuid primary key default gen_random_uuid(),
+  server text not null check (server in ('survival', 'lifesteal')),
+  slot_number int not null check (slot_number between 1 and 8),
+  coins int not null default 0,
+  price numeric not null default 0,
+  command_template text,   -- e.g. "eco give {player} {coins}" — blank = manual delivery
+  created_at timestamptz not null default now(),
+  unique (server, slot_number)
+);
+
+alter table coin_packages add column if not exists command_template text;
+
+alter table coin_packages enable row level security;
+drop policy if exists "public read" on coin_packages;
+create policy "public read" on coin_packages for select using (true);
+
+insert into coin_packages (server, slot_number, coins, price)
+select 'survival', n, coins, coins * 2
+from (values (1,50), (2,100), (3,250), (4,500), (5,1000), (6,2000), (7,3500), (8,5000)) as v(n, coins)
+on conflict (server, slot_number) do nothing;
+
 -- ─── Server + social links ──────────────────────────────────────────────
+-- Fixed set of known links (Java/Bedrock IP, Discord invite) — the admin
+-- panel edits these in place rather than adding/removing arbitrary rows.
 create table if not exists site_links (
   id uuid primary key default gen_random_uuid(),
   group_name text not null check (group_name in ('server', 'social')),
@@ -72,6 +105,15 @@ create table if not exists site_links (
   url text not null,
   sort_order int not null default 0
 );
+
+create unique index if not exists site_links_group_label_idx on site_links (group_name, label);
+
+insert into site_links (group_name, label, url, sort_order)
+values
+  ('server', 'Java Edition', 'play.demoncoremc.fun:25577', 1),
+  ('server', 'Bedrock Edition', 'play.demoncoremc.fun:19176', 2),
+  ('social', 'Discord', 'https://discord.gg/P6agT4xbAm', 1)
+on conflict (group_name, label) do nothing;
 
 -- ─── Staff directory ─────────────────────────────────────────────────────
 create table if not exists staff_members (
@@ -131,10 +173,10 @@ create table if not exists staff_applications (
   status text not null default 'new' check (status in ('new', 'reviewed', 'accepted', 'rejected'))
 );
 
--- ─── Shop purchase requests (no payment gateway yet — manual fulfillment) ──
+-- ─── Shop purchase requests (paid via Razorpay checkout) ────────────────
 create table if not exists purchase_requests (
   id uuid primary key default gen_random_uuid(),
-  item_type text not null check (item_type in ('rank', 'crate_key')),
+  item_type text not null check (item_type in ('rank', 'crate_key', 'coin_package')),
   item_name text not null,
   server text,
   quantity int not null default 1,
@@ -144,6 +186,61 @@ create table if not exists purchase_requests (
   created_at timestamptz not null default now(),
   status text not null default 'new' check (status in ('new', 'contacted', 'completed', 'cancelled'))
 );
+
+-- Idempotent widen for pre-existing databases created before 'coin_package' existed.
+alter table purchase_requests drop constraint if exists purchase_requests_item_type_check;
+alter table purchase_requests add constraint purchase_requests_item_type_check
+  check (item_type in ('rank', 'crate_key', 'coin_package'));
+
+-- Checkout now collects Discord username instead of email, and tracks the
+-- Razorpay order/payment so a webhook or support request can look it up.
+alter table purchase_requests add column if not exists discord_username text;
+alter table purchase_requests alter column email drop not null;
+alter table purchase_requests add column if not exists razorpay_order_id text;
+alter table purchase_requests add column if not exists razorpay_payment_id text;
+
+alter table purchase_requests drop constraint if exists purchase_requests_status_check;
+alter table purchase_requests add constraint purchase_requests_status_check
+  check (status in ('new', 'paid', 'contacted', 'completed', 'cancelled'));
+
+-- Checkout also collects a real name + phone number now.
+alter table purchase_requests add column if not exists buyer_name text;
+alter table purchase_requests add column if not exists phone_number text;
+
+-- Set once the gamemode delivery plugin has successfully run this order's
+-- command_template in-game — lets the plugin poll "status = paid AND
+-- delivered_at is null" without redelivering something twice.
+alter table purchase_requests add column if not exists delivered_at timestamptz;
+
+-- Per-staff socials: 3 fixed platforms, always shown on the card even when
+-- empty — so plain nullable columns instead of an open-ended list.
+alter table staff_members drop column if exists social_links;
+alter table staff_members add column if not exists instagram_url text;
+alter table staff_members add column if not exists youtube_url text;
+alter table staff_members add column if not exists discord_url text;
+
+-- ─── Media Rank (content creators) ──────────────────────────────────────
+create table if not exists media_creators (
+  id uuid primary key default gen_random_uuid(),
+  creator_name text not null,        -- channel/stream handle, e.g. "MARTIAN IS LIVE"
+  real_name text,
+  bio text,
+  avatar_url text,
+  instagram_url text,
+  youtube_url text,
+  discord_url text,
+  sort_order int not null default 0,
+  created_at timestamptz not null default now()
+);
+
+alter table media_creators drop column if exists social_links;
+alter table media_creators add column if not exists instagram_url text;
+alter table media_creators add column if not exists youtube_url text;
+alter table media_creators add column if not exists discord_url text;
+
+alter table media_creators enable row level security;
+drop policy if exists "public read" on media_creators;
+create policy "public read" on media_creators for select using (true);
 
 -- ─── Row Level Security ─────────────────────────────────────────────────
 alter table server_stats enable row level security;
@@ -159,13 +256,24 @@ alter table staff_applications enable row level security;
 alter table purchase_requests enable row level security;
 
 -- Public read access on display content only (not on submissions).
+-- `create policy` has no `if not exists` — dropping first makes re-running
+-- this whole file safe, instead of erroring out partway on a second run
+-- (which silently skipped every statement after it, including new tables).
+drop policy if exists "public read" on server_stats;
 create policy "public read" on server_stats for select using (true);
+drop policy if exists "public read" on leaderboards;
 create policy "public read" on leaderboards for select using (true);
+drop policy if exists "public read" on ranks;
 create policy "public read" on ranks for select using (true);
+drop policy if exists "public read" on crate_keys;
 create policy "public read" on crate_keys for select using (true);
+drop policy if exists "public read" on site_links;
 create policy "public read" on site_links for select using (true);
+drop policy if exists "public read" on staff_members;
 create policy "public read" on staff_members for select using (true);
+drop policy if exists "public read" on rules;
 create policy "public read" on rules for select using (true);
+drop policy if exists "public read" on current_event;
 create policy "public read" on current_event for select using (true);
 
 -- No public policies on contact_submissions / staff_applications / purchase_requests:

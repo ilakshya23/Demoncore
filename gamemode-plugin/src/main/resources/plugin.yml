@@ -1,0 +1,6 @@
+name: DemonCoreDeliveryBridge
+version: 1.0.0
+main: fun.demoncoremc.deliverybridge.DemonCoreDeliveryBridge
+api-version: '1.21'
+author: DEMONCORE MC
+description: Polls the DEMONCORE MC website for paid orders and runs their delivery command in-game.

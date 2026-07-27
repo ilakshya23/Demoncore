@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
+import { cookies } from 'next/headers';
+import { ADMIN_COOKIE, isValidSessionCookie } from '@/lib/admin-auth';
 import { supabaseAdmin } from '@/lib/supabase';
 
 // Every table the admin panel is allowed to touch. Anything not listed here
@@ -7,7 +8,9 @@ import { supabaseAdmin } from '@/lib/supabase';
 const ALLOWED_TABLES = new Set([
   'ranks',
   'crate_keys',
+  'coin_packages',
   'staff_members',
+  'media_creators',
   'rules',
   'site_links',
   'current_event',
@@ -17,11 +20,7 @@ const ALLOWED_TABLES = new Set([
 ]);
 
 async function requireAdmin() {
-  const supabase = supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user;
+  return isValidSessionCookie(cookies().get(ADMIN_COOKIE)?.value);
 }
 
 function checkTable(table: string) {

@@ -1,5 +1,5 @@
-import { RanksGrid, CrateKeysGrid } from '@/components/gamemode/RanksAndCrates';
-import { getRanks, getCrateKeys } from '@/lib/queries';
+import { RanksGrid, CrateKeysGrid, CoinsGrid } from '@/components/gamemode/RanksAndCrates';
+import { getRanks, getCrateKeys, getCoinPackages } from '@/lib/queries';
 import { CrackDivider } from '@/components/ui';
 import { Reveal } from '@/components/Reveal';
 import { PageHero } from '@/components/PageHero';
@@ -17,6 +17,7 @@ export default async function ShopPage() {
       ...mode,
       ranks: await getRanks(mode.key),
       keys: await getCrateKeys(mode.key),
+      coins: await getCoinPackages(mode.key),
     }))
   );
 
@@ -44,6 +45,14 @@ export default async function ShopPage() {
             </h2>
           </Reveal>
           <CrateKeysGrid keys={mode.keys} server={mode.key} />
+
+          <Reveal className="mt-16">
+            <h2 className="font-display text-2xl md:text-3xl text-parchment">
+              {mode.label} <span style={{ color: mode.accent }}>Coins</span>
+            </h2>
+            <p className="text-ash text-sm mt-2 mb-8">2 INR = 1 Coin</p>
+          </Reveal>
+          <CoinsGrid coins={mode.coins} server={mode.key} />
         </section>
       ))}
     </>
