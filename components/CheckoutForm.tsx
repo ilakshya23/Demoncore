@@ -100,6 +100,10 @@ export function CheckoutForm({ item, paymentsEnabled }: { item: CheckoutItem; pa
           ondismiss: () => setStatus('idle'),
         },
       });
+      rzp.on('payment.failed', (response: any) => {
+        setError(response.error?.description || 'Payment failed — mind trying again?');
+        setStatus('error');
+      });
       rzp.open();
     } catch (e: any) {
       setError(e.message || 'Something went wrong — mind trying again?');

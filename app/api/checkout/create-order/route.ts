@@ -51,6 +51,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ purchaseId: purchase.id, razorpay: null });
   }
 
+  // Razorpay's own floor — orders below ₹1 are rejected by their API anyway,
+  // but failing fast here gives a clearer error than their generic 400.
+  const amountPaise = Math.round(amount * 100);
+  if (amountPaise < 100) {
+    return NextResponse.json({ error: 'Amount must be at least ₹1' }, { status: 400 });
+  }
+
   const razorpay = new Razorpay({
     key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
@@ -58,7 +65,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const order = await razorpay.orders.create({
-      amount: Math.round(amount * 100), // paise
+      amount: amountPaise,
       currency: 'INR',
       receipt: purchase.id,
       notes: { itemName, buyerName, minecraftUsername, discordUsername, phoneNumber },
@@ -71,6 +78,10 @@ export async function POST(req: NextRequest) {
       razorpay: { orderId: order.id, amount: order.amount, currency: order.currency, keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID },
     });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Could not create payment order' }, { status: 500 });
+    // The Razorpay SDK throws { statusCode, error: { description } } straight
+    // from their API response — 401 means the key/secret pair is wrong.
+    const status = e.statusCode === 401 ? 401 : 500;
+    const message = e.error?.description || e.message || 'Could not create payment order';
+    return NextResponse.json({ error: message }, { status });
   }
 }
